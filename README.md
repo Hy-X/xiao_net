@@ -123,7 +123,6 @@ pip install -r requirements.txt
 
 ### Optional Dependencies
 
-- **TensorBoard**: Training visualization and monitoring
 - **tqdm**: Progress bars for training loops
 
 ---

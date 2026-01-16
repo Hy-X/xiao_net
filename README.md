@@ -147,8 +147,8 @@ python experiments/xn_demo_10s.py
 
 **XiaoNet** is inspired by and designed as a lightweight alternative to:
 
-- **PhaseNet**: Deep learning model for seismic phase picking (Zhu & Beroza, 2019)
-- **EQTransformer**: Transformer-based earthquake detection and phase picking (Mousavi et al., 2020)
+- **PhaseNet**: Deep learning model for seismic phase picking
+- **EQTransformer**: Transformer-based earthquake detection and phase picking
 - **GPD (Generalized Phase Detection)**: Machine learning approach to seismic phase detection
 - **STA/LTA**: Classical short-term average/long-term average trigger algorithm
 

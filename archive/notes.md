@@ -1,6 +1,6 @@
 # Historical Development Notes
 
-This file contains notes and documentation from the development history of xiao_net.
+This file contains notes and documentation from the development history of XiaoNet.
 
 ## Version History
 

@@ -1,6 +1,6 @@
 # Archive
 
-This directory contains historical and reference implementations that have been preserved for backward compatibility and reference purposes.
+This directory contains historical and reference implementations for XiaoNet that have been preserved for backward compatibility and reference purposes.
 
 ## Contents
 

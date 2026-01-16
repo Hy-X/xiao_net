@@ -1,10 +1,10 @@
-# xiao_net: Lightweight Neural Network for Seismic Phase Picking and Earthquake Detection
+# XiaoNet: Lightweight Neural Network for Seismic Phase Picking and Earthquake Detection
 
 [![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)](https://www.python.org/)
 [![PyTorch](https://img.shields.io/badge/PyTorch-1.9+-orange.svg)](https://pytorch.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-**xiao_net** is a lightweight, edge-oriented neural network framework for **seismic phase picking**, **earthquake detection**, and **seismological signal processing**. Designed as a compact and efficient alternative to large deep-learning models such as PhaseNet and EQTransformer, this PyTorch-based framework focuses on **model compression**, **knowledge distillation**, **edge AI**, and **streaming-friendly inference** for low-power devices (e.g., Raspberry Pi 5, embedded systems, IoT devices).
+**XiaoNet** is a lightweight, edge-oriented neural network framework for **seismic phase picking**, **earthquake detection**, and **seismological signal processing**. Designed as a compact and efficient alternative to large deep-learning models such as PhaseNet and EQTransformer, this PyTorch-based framework focuses on **model compression**, **knowledge distillation**, **edge AI**, and **streaming-friendly inference** for low-power devices (e.g., Raspberry Pi 5, embedded systems, IoT devices).
 
 ## Keywords
 
@@ -16,7 +16,7 @@
 
 Traditional deep-learning-based seismic phase pickers (such as PhaseNet, EQTransformer, and GPD) provide excellent accuracy for earthquake detection and phase picking but are often too heavy for real-time, low-power, or embedded systems. As a result, many operational edge deployments, seismic monitoring networks, and earthquake early warning systems still rely on classical methods such as STA/LTA (Short-Term Average/Long-Term Average).
 
-**xiao_net** aims to bridge this gap by:
+**XiaoNet** aims to bridge this gap by:
 - Preserving the accuracy benefits of modern deep learning and neural networks
 - Drastically reducing model size and inference latency for edge devices
 - Supporting continuous waveform processing and real-time seismic monitoring
@@ -84,7 +84,7 @@ xiao_net/
 
 ## Use Cases and Applications
 
-**xiao_net** is designed for various seismological and geophysical applications:
+**XiaoNet** is designed for various seismological and geophysical applications:
 
 - **Earthquake Early Warning (EEW) Systems**: Real-time phase picking for rapid earthquake detection
 - **Seismic Monitoring Networks**: Continuous waveform analysis on edge devices
@@ -145,7 +145,7 @@ python experiments/xn_demo_10s.py
 
 ## Related Work and Comparisons
 
-**xiao_net** is inspired by and designed as a lightweight alternative to:
+**XiaoNet** is inspired by and designed as a lightweight alternative to:
 
 - **PhaseNet**: Deep learning model for seismic phase picking (Zhu & Beroza, 2019)
 - **EQTransformer**: Transformer-based earthquake detection and phase picking (Mousavi et al., 2020)
@@ -153,7 +153,7 @@ python experiments/xn_demo_10s.py
 - **STA/LTA**: Classical short-term average/long-term average trigger algorithm
 
 **Key Differences:**
-- **Model Size**: xiao_net models are 10-100x smaller than PhaseNet/EQTransformer
+- **Model Size**: XiaoNet models are 10-100x smaller than PhaseNet/EQTransformer
 - **Inference Speed**: Optimized for real-time processing on edge devices
 - **Deployment**: Designed for resource-constrained environments
 - **Architecture**: U-Net-based student models trained via knowledge distillation
@@ -257,7 +257,7 @@ augmented_waveform = pipeline(waveform)
 
 ## Performance and Benchmarks
 
-**xiao_net** is designed to achieve:
+**XiaoNet** is designed to achieve:
 
 - **Model Size**: < 1-5 MB (vs. 50-200 MB for PhaseNet/EQTransformer)
 - **Inference Latency**: < 10 ms per window on CPU, < 5 ms on GPU
@@ -294,11 +294,11 @@ Each module in this project follows these rules:
 
 ## Citation
 
-If you use **xiao_net** in your research on seismic phase picking, earthquake detection, edge AI, or model compression, please cite:
+If you use **XiaoNet** in your research on seismic phase picking, earthquake detection, edge AI, or model compression, please cite:
 
 ```bibtex
-@misc{xiao_net2026,
-  title={xiao_net: Lightweight Neural Phase Picking for Edge Devices},
+@misc{xiaonet2026,
+  title={XiaoNet: Lightweight Neural Phase Picking for Edge Devices},
   author={Xiao, Hongyu},
   year={2026},
   howpublished={\url{https://github.com/yourname/xiao_net}},
@@ -308,7 +308,7 @@ If you use **xiao_net** in your research on seismic phase picking, earthquake de
 
 ### Related Citations
 
-When using xiao_net, you may also want to cite:
+When using XiaoNet, you may also want to cite:
 
 - **PhaseNet**: Zhu, W., & Beroza, G. C. (2019). PhaseNet: a deep-neural-network-based seismic arrival-time picking method. *Geophysical Journal International*.
 - **EQTransformer**: Mousavi, S. M., et al. (2020). Earthquake transformer—an attentive deep-learning model for simultaneous earthquake detection and phase picking. *Nature Communications*.
@@ -333,7 +333,7 @@ Please open an issue or submit a pull request on GitHub.
 
 ## Acknowledgments
 
-**xiao_net** builds upon the excellent work of:
+**XiaoNet** builds upon the excellent work of:
 
 - **PhaseNet** (Zhu & Beroza, 2019) for seismic phase picking
 - **EQTransformer** (Mousavi et al., 2020) for earthquake detection

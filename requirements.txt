@@ -1,0 +1,11 @@
+# Core dependencies for xiao_net
+torch>=1.9.0
+numpy>=1.19.0
+obspy>=1.2.0
+seisbench>=0.3.0
+scipy>=1.7.0
+matplotlib>=3.4.0
+
+# Optional but recommended
+tqdm>=4.62.0
+tensorboard>=2.7.0

@@ -44,39 +44,40 @@ Traditional deep-learning-based seismic phase pickers (such as PhaseNet, EQTrans
 ```
 xiao_net/
 ├── README.md
-├── config.json
-├── main.py                     # Entry point for experiments
+├── LICENSE
+├── requirements.txt            # Python package dependencies
+├── config.json                 # Default hyperparameters & paths
+├── xn_main_train.py            # Main training script
+├── xn_utils.py                 # Utility functions (seed, device, helpers)
+├── xn_early_stopping.py        # Early stopping class
 │
 ├── models/
-│   ├── small_phasenet.py       # Student network definitions
-│   ├── teacher_wrappers.py     # Interfaces for teacher models
-│   └── __init__.py
+│   ├── __init__.py
+│   └── xn_xiao_net.py          # XiaoNet student network architecture
 │
-├── distillation/
-│   ├── losses.py               # Distillation losses
-│   ├── trainer.py              # Distillation training loops
-│   └── __init__.py
+├── loss/
+│   ├── __init__.py
+│   └── xn_distillation_loss.py # Distillation + label loss
 │
-├── data/
-│   ├── loaders.py              # Dataset and DataLoader utilities
-│   ├── augmentations.py        # Data augmentation pipelines
-│   └── __init__.py
+├── dataloader/
+│   ├── __init__.py
+│   └── xn_loaders.py           # DataLoaders wrapping GenericGenerator
 │
-├── inference/
-│   ├── streaming.py            # Streaming / sliding-window inference
-│   ├── postprocess.py          # Peak picking & smoothing
-│   └── __init__.py
+├── augmentations/
+│   ├── __init__.py
+│   └── xn_augment_pipeline.py  # WindowAroundSample, Normalize, etc.
 │
-├── utils/
-│   ├── early_stopping.py
-│   ├── metrics.py
-│   ├── logging.py
-│   └── __init__.py
+├── evaluation/
+│   ├── __init__.py
+│   └── xn_evaluate.py          # Evaluation functions and metrics
 │
-└── archive/                    # Historical and reference implementations
-    ├── original_training.py
-    ├── baseline_experiments/
-    └── notes.md
+├── experiments/                # Example experiment scripts
+│   └── xn_demo_10s.py          # Demo experiment for 10-second windows
+│
+└── tests/                      # Unit tests for modules
+    ├── __init__.py
+    ├── xn_test_models.py       # Model architecture tests
+    └── xn_test_loss.py         # Loss function tests
 ```
 
 ---
@@ -132,13 +133,13 @@ pip install -r requirements.txt
 ### Train a student model with distillation
 
 ```bash
-python main.py --config config.json
+python xn_main_train.py --config config.json
 ```
 
-### Run inference on continuous waveform
+### Run a demo experiment
 
 ```bash
-python inference/streaming.py --config config.json --input data/example.mseed
+python experiments/xn_demo_10s.py
 ```
 
 ---
@@ -202,11 +203,11 @@ This project explores the following research directions in **seismological machi
 ### Basic Usage: Seismic Phase Picking
 
 ```python
-from models.small_phasenet import SmallPhaseNet
+from models.xn_xiao_net import XiaoNet
 import torch
 
 # Initialize model for 3-component seismic data (Z, N, E)
-model = SmallPhaseNet(window_len=1000, in_channels=3, num_phases=3)
+model = XiaoNet(window_len=1000, in_channels=3, num_phases=3, base_channels=16)
 
 # Input: batch_size=1, channels=3 (ZNE), samples=1000
 x = torch.randn(1, 3, 1000)
@@ -215,26 +216,42 @@ x = torch.randn(1, 3, 1000)
 y = model(x)  # Shape: (1, 3, 1000) for P, S, and noise probabilities
 ```
 
-### Real-time Streaming Inference
+### Training with Knowledge Distillation
 
 ```python
-from inference.streaming import StreamingPhasePicker
+from models.xn_xiao_net import XiaoNet
+from loss.xn_distillation_loss import DistillationLoss
+from xn_utils import set_seed, setup_device
+from xn_main_train import main
 
-picker = StreamingPhasePicker(model, window_len=1000, overlap=500)
-picks = picker.process_stream(seismic_stream)  # Returns P- and S-wave picks
+# Set up training
+set_seed(42)
+device = setup_device('cuda')
+
+# Initialize model
+model = XiaoNet(window_len=1000, in_channels=3, num_phases=3).to(device)
+
+# Initialize distillation loss
+criterion = DistillationLoss(alpha=0.5, temperature=4.0)
+
+# Run training (see xn_main_train.py for full implementation)
+main('config.json')
 ```
 
-### Knowledge Distillation Training
+### Data Augmentation
 
 ```python
-from distillation.trainer import DistillationTrainer
+from augmentations.xn_augment_pipeline import AugmentPipeline, Normalize, AddNoise
 
-trainer = DistillationTrainer(
-    student_model=model,
-    teacher_model=pretrained_phasenet,
-    config_path="config.json"
-)
-trainer.train()
+# Create augmentation pipeline
+augmentations = [
+    Normalize(method='zscore'),
+    AddNoise(noise_level=0.1)
+]
+pipeline = AugmentPipeline(augmentations)
+
+# Apply to waveform
+augmented_waveform = pipeline(waveform)
 ```
 
 ---

@@ -3,6 +3,6 @@ Models package for xiao_net.
 Contains neural network architectures for seismic phase picking.
 """
 
-from .xiao_net import Xiao_Net
+from .xn_xiao_net import XiaoNet
 
-__all__ = ['Xiao_Net']
+__all__ = ['XiaoNet']

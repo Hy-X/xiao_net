@@ -11,8 +11,8 @@ import sys
 # Add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from models.small_phasenet import SmallPhaseNet
-from utils import set_seed, setup_device, count_parameters, get_model_size_mb
+from models.xn_xiao_net import XiaoNet
+from xn_utils import set_seed, setup_device, count_parameters, get_model_size_mb
 
 
 def demo_10s_experiment():
@@ -34,7 +34,7 @@ def demo_10s_experiment():
     print(f"Using device: {device}")
     
     # Initialize model
-    model = SmallPhaseNet(
+    model = XiaoNet(
         window_len=config['window_len'],
         in_channels=config['in_channels'],
         num_phases=config['num_phases'],

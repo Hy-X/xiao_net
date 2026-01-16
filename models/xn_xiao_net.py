@@ -8,7 +8,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 
-class SmallPhaseNet(nn.Module):
+class XiaoNet(nn.Module):
     """
     Lightweight student network for seismic phase picking.
     
@@ -23,7 +23,7 @@ class SmallPhaseNet(nn.Module):
     """
     
     def __init__(self, window_len=1000, in_channels=3, num_phases=3, base_channels=16):
-        super(SmallPhaseNet, self).__init__()
+        super(XiaoNet, self).__init__()
         self.window_len = window_len
         self.in_channels = in_channels
         self.num_phases = num_phases

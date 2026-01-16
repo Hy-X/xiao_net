@@ -4,12 +4,12 @@ Unit tests for model architectures.
 
 import torch
 import pytest
-from models.small_phasenet import SmallPhaseNet
+from models.xn_xiao_net import XiaoNet
 
 
-def test_small_phasenet_forward():
-    """Test SmallPhaseNet forward pass."""
-    model = SmallPhaseNet(
+def test_xiao_net_forward():
+    """Test XiaoNet forward pass."""
+    model = XiaoNet(
         window_len=1000,
         in_channels=3,
         num_phases=3,
@@ -23,10 +23,10 @@ def test_small_phasenet_forward():
     assert output.shape == (2, 3, 1000), f"Expected shape (2, 3, 1000), got {output.shape}"
 
 
-def test_small_phasenet_different_sizes():
-    """Test SmallPhaseNet with different window lengths."""
+def test_xiao_net_different_sizes():
+    """Test XiaoNet with different window lengths."""
     for window_len in [500, 1000, 2000]:
-        model = SmallPhaseNet(
+        model = XiaoNet(
             window_len=window_len,
             in_channels=3,
             num_phases=3
@@ -37,6 +37,6 @@ def test_small_phasenet_different_sizes():
 
 
 if __name__ == "__main__":
-    test_small_phasenet_forward()
-    test_small_phasenet_different_sizes()
+    test_xiao_net_forward()
+    test_xiao_net_different_sizes()
     print("All tests passed!")

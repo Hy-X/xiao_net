@@ -3,7 +3,7 @@ Unit tests for loss functions.
 """
 
 import torch
-from loss.distillation_loss import DistillationLoss
+from loss.xn_distillation_loss import DistillationLoss
 
 
 def test_distillation_loss_hard_labels():

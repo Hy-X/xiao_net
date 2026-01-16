@@ -1,6 +1,6 @@
 {
   "model": {
-    "name": "Xiao_Net",
+    "name": "XiaoNet",
     "window_len": 1000,
     "in_channels": 3,
     "num_phases": 3,

@@ -338,6 +338,7 @@ Please open an issue or submit a pull request on GitHub.
 
 - **PhaseNet** (Zhu & Beroza, 2019) for seismic phase picking
 - **EQTransformer** (Mousavi et al., 2020) for earthquake detection
+- **EasyQuake** for earthquake detection and cataloging workflows
 - **SeisBench** for seismological machine learning infrastructure
 - **ObsPy** for seismic data processing
 - The broader seismological and machine learning communities

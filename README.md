@@ -200,5 +200,5 @@ MIT License
 For questions, collaborations, or issues, please open an issue or contact:
 
 **Hongyu Xiao**  
-Email: your.email@example.com
+Email: hongyu.xiao-1@ou.edu
 

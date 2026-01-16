@@ -354,7 +354,7 @@ Affiliation: University of Oklahoma
 
 ## Additional Resources
 
-- **Seismology**: [IRIS](https://www.iris.edu/), [USGS](https://www.usgs.gov/)
+- **Seismology**: [IRIS](https://www.iris.edu/), [OGS](https://www.ou.edu/ogs)
 - **Machine Learning**: [PyTorch Documentation](https://pytorch.org/docs/), [SeisBench](https://github.com/seisbench/seisbench)
-- **Data Sources**: [IRIS DMC](https://ds.iris.edu/ds/), [SCEDC](https://scedc.caltech.edu/)
+- **Data Sources**: [IRIS DMC](https://ds.iris.edu/ds/), [OGS](https://www.ou.edu/ogs)
 

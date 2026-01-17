@@ -28,14 +28,16 @@ Traditional deep-learning-based seismic phase pickers (such as PhaseNet, EQTrans
 ## Key Features
 
 - 🪶 **Lightweight U-Net-style architectures** for seismic phase picking and earthquake detection
-- 🎓 **Knowledge distillation** from large pretrained teacher models (e.g., PhaseNet, EQTransformer)
+- 🎓 **Transfer Learning**: Fine-tuned from PhaseNet models pretrained on STEAD dataset
+- 📚 **Multi-phase Support**: Handles multiple P and S phase types (P, pP, Pg, Pn, PmP, S, Sg, Sn, SmS, etc.)
 - ⚡ **Edge-first design**: low memory footprint, minimal compute requirements, ultra-low latency inference
 - 🔁 **Streaming-friendly inference** on continuous seismic waveforms and real-time data streams
 - 🧩 **Modular codebase** for reusability, experimentation, and easy integration
 - 📦 **Config-driven experiments** using JSON configuration files
 - 🌐 **PyTorch-based** implementation for easy deployment and model export
-- 📊 **Compatible with SeisBench** and standard seismological data formats (SAC, MiniSEED, etc.)
+- 📊 **SeisBench Integration**: Full compatibility with SeisBench datasets, models, and augmentation pipelines
 - 🔬 **Research-ready** with comprehensive evaluation metrics and benchmarking tools
+- 🎯 **Probabilistic Labeling**: Gaussian-smoothed phase labels for improved training stability
 
 ---
 
@@ -127,9 +129,11 @@ pip install -r requirements.txt
 - **PyTorch**: Deep learning framework for neural network training and inference
 - **NumPy**: Numerical computing and array operations
 - **ObsPy**: Seismological data processing and waveform handling
-- **SeisBench**: Seismological machine learning models and datasets
+- **SeisBench**: Seismological machine learning models, datasets, and augmentation pipelines
 - **SciPy**: Scientific computing and signal processing
 - **Matplotlib**: Visualization and plotting
+- **Pandas**: Data manipulation and analysis
+- **Seaborn**: Statistical data visualization
 
 ### Optional Dependencies
 
@@ -153,6 +157,33 @@ python experiments/xn_demo_10s.py
 
 ---
 
+## Datasets and Training
+
+**XiaoNet** is trained using transfer learning from PhaseNet models pretrained on the **STEAD** (Seismic Waveform Dataset) dataset, fine-tuned on regional datasets such as the **OKLA_1Mil** (Oklahoma 1 Million) dataset.
+
+### Training Methodology
+
+- **Transfer Learning**: Models are initialized with PhaseNet weights pretrained on STEAD
+- **Fine-tuning**: Models are fine-tuned on regional datasets (e.g., OKLA_1Mil with 120-second windows)
+- **Data Augmentation**: Comprehensive augmentation pipeline including:
+  - Window extraction around phase arrivals (6000 samples, 3000 samples before phase)
+  - Random window sampling with padding
+  - Normalization (demean, detrend, peak amplitude normalization)
+  - Probabilistic labeling with Gaussian smoothing (σ=30 samples)
+- **Training Features**:
+  - Early stopping with patience-based monitoring
+  - Learning rate scheduling (ReduceLROnPlateau)
+  - Cross-entropy loss with epsilon smoothing
+  - Support for multiple P and S phase types
+
+### Supported Datasets
+
+- **STEAD**: Seismic Waveform Dataset for pretraining
+- **OKLA_1Mil**: Oklahoma regional dataset (1 million events, 120-second windows)
+- Compatible with SeisBench dataset formats and custom datasets
+
+---
+
 ## Related Work and Comparisons
 
 **XiaoNet** is inspired by and designed as a lightweight alternative to:
@@ -166,7 +197,9 @@ python experiments/xn_demo_10s.py
 - **Model Size**: XiaoNet models are 10-100x smaller than PhaseNet/EQTransformer
 - **Inference Speed**: Optimized for real-time processing on edge devices
 - **Deployment**: Designed for resource-constrained environments
-- **Architecture**: U-Net-based student models trained via knowledge distillation
+- **Architecture**: U-Net-based student models trained via transfer learning and knowledge distillation
+- **Training Data**: Fine-tuned on regional datasets (e.g., OKLA_1Mil) after pretraining on STEAD
+- **Phase Coverage**: Supports comprehensive phase type detection including regional phases (Pg, Pn, Sg, Sn, etc.)
 
 ---
 
@@ -247,20 +280,43 @@ criterion = DistillationLoss(alpha=0.5, temperature=4.0)
 main('config.json')
 ```
 
-### Data Augmentation
+### Data Augmentation with SeisBench
 
 ```python
-from augmentations.xn_augment_pipeline import AugmentPipeline, Normalize, AddNoise
+import seisbench.generate as sbg
+import numpy as np
+
+# Define phase dictionary for labeling
+phase_dict = {
+    "trace_p_arrival_sample": "P",
+    "trace_P_arrival_sample": "P",
+    "trace_s_arrival_sample": "S",
+    "trace_S_arrival_sample": "S",
+    # ... additional phase types
+}
 
 # Create augmentation pipeline
 augmentations = [
-    Normalize(method='zscore'),
-    AddNoise(noise_level=0.1)
+    sbg.WindowAroundSample(
+        list(phase_dict.keys()), 
+        samples_before=3000, 
+        windowlen=6000, 
+        selection="random", 
+        strategy="variable"
+    ),
+    sbg.RandomWindow(windowlen=3001, strategy="pad"),
+    sbg.Normalize(
+        demean_axis=-1, 
+        detrend_axis=-1, 
+        amp_norm_axis=-1, 
+        amp_norm_type="peak"
+    ),
+    sbg.ChangeDtype(np.float32),
+    sbg.ProbabilisticLabeller(sigma=30, dim=0),
 ]
-pipeline = AugmentPipeline(augmentations)
 
-# Apply to waveform
-augmented_waveform = pipeline(waveform)
+# Apply to generator
+generator.add_augmentations(augmentations)
 ```
 
 ---

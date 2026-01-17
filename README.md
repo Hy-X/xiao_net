@@ -340,7 +340,6 @@ Please open an issue or submit a pull request on GitHub.
 - **EasyQuake** for earthquake detection and cataloging workflows
 - **SeisBench** for seismological machine learning infrastructure
 - **ObsPy** for seismic data processing
-- The broader seismological and machine learning communities
 
 ---
 

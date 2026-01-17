@@ -4,9 +4,10 @@ This directory contains historical and reference implementations for XiaoNet tha
 
 ## Contents
 
-- **original_training.py**: Original training script (deprecated, use `xn_main_train.py` instead)
-- **baseline_experiments/**: Baseline experiment scripts and reference implementations
-- **notes.md**: Historical notes and development documentation
+- **TL_PNet_1Mil_ModelTrain_FromSTEAD_ver_1.py**: Transfer learning script for PhaseNet fine-tuning on OKLA_1Mil dataset from STEAD-pretrained models
+  - Demonstrates training methodology with SeisBench integration
+  - Includes data augmentation pipeline with probabilistic labeling
+  - Shows early stopping and learning rate scheduling implementation
 
 ## Note
 

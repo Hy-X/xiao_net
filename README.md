@@ -84,15 +84,25 @@ xiao_net/
 
 ## Use Cases and Applications
 
-**XiaoNet** is designed for various seismological and geophysical applications:
+**XiaoNet** is designed for various seismological and geophysical applications across operational, research, and edge computing domains.
 
-- **Earthquake Early Warning (EEW) Systems**: Real-time phase picking for rapid earthquake detection
-- **Seismic Monitoring Networks**: Continuous waveform analysis on edge devices
-- **Research and Education**: Lightweight alternative for seismological machine learning research
+### Operational and Real-time Systems
+
+- **Earthquake Early Warning (EEW) Systems**: Real-time phase picking for rapid earthquake detection and alert generation
+- **Seismic Monitoring Networks**: Continuous waveform analysis and phase picking on distributed edge devices
+- **Real-time Seismology**: Streaming inference on continuous seismic data streams for live monitoring
+
+### Research and Development
+
+- **Seismological Machine Learning Research**: Lightweight alternative for studying neural network-based phase picking
+- **Model Compression Research**: Benchmarking knowledge distillation techniques and edge AI optimization
+- **Educational Applications**: Teaching tool for seismology and deep learning courses
+
+### Edge Computing and Embedded Systems
+
 - **Embedded Seismic Stations**: Deployment on Raspberry Pi, microcontrollers, and IoT devices
-- **Field Deployments**: Low-power seismic phase picking in remote locations
-- **Real-time Seismology**: Streaming inference on continuous seismic data streams
-- **Model Compression Research**: Benchmarking knowledge distillation techniques for seismology
+- **Field Deployments**: Low-power seismic phase picking in remote locations with limited infrastructure
+- **Mobile and Portable Systems**: On-device inference for field seismology and rapid response teams
 
 ---
 

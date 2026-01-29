@@ -44,6 +44,7 @@ class XiaoNet(nn.Module):
         
         # Output layer
         self.output = nn.Conv1d(base_channels, num_phases, kernel_size=1)
+        self.softmax = nn.Softmax(dim=1)
         
         # Pooling and upsampling
         self.pool = nn.MaxPool1d(2)
@@ -70,8 +71,16 @@ class XiaoNet(nn.Module):
         Returns:
             Output tensor of shape (batch, num_phases, samples)
         """
+        # Store original size
+        original_size = x.size(2)
+        
+        # Trim to multiple of 8 for stable pooling/upsampling
+        # 3001 → 3000, which divides evenly: 3000 → 1500 → 750 → 375
+        trimmed_size = (original_size // 8) * 8
+        x_trimmed = x[:, :, :trimmed_size]
+        
         # Encoder path
-        enc1_out = self.enc1(x)
+        enc1_out = self.enc1(x_trimmed)
         enc2_out = self.enc2(self.pool(enc1_out))
         enc3_out = self.enc3(self.pool(enc2_out))
         
@@ -79,11 +88,25 @@ class XiaoNet(nn.Module):
         bottleneck_out = self.bottleneck(self.pool(enc3_out))
         
         # Decoder path with skip connections
-        dec3_out = self.dec3(torch.cat([self.upsample(bottleneck_out), enc3_out], dim=1))
-        dec2_out = self.dec2(torch.cat([self.upsample(dec3_out), enc2_out], dim=1))
-        dec1_out = self.dec1(torch.cat([self.upsample(dec2_out), enc1_out], dim=1))
+        up3 = self.upsample(bottleneck_out)
+        up3 = up3[:, :, :enc3_out.size(2)]  # Crop to match enc3_out size
+        dec3_out = self.dec3(torch.cat([up3, enc3_out], dim=1))
         
-        # Output
+        up2 = self.upsample(dec3_out)
+        up2 = up2[:, :, :enc2_out.size(2)]  # Crop to match enc2_out size
+        dec2_out = self.dec2(torch.cat([up2, enc2_out], dim=1))
+        
+        up1 = self.upsample(dec2_out)
+        up1 = up1[:, :, :enc1_out.size(2)]  # Crop to match enc1_out size
+        dec1_out = self.dec1(torch.cat([up1, enc1_out], dim=1))
+        
+        # Output with softmax activation
         output = self.output(dec1_out)
+        output = self.softmax(output)
+        
+        # Pad back to original input size if needed (3000 → 3001)
+        if output.size(2) < original_size:
+            pad_amount = original_size - output.size(2)
+            output = F.pad(output, (0, pad_amount))
         
         return output

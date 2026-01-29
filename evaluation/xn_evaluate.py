@@ -24,6 +24,9 @@ def evaluate_model(model, dataloader, device):
     model.eval()
     all_predictions = []
     all_labels = []
+    total_loss = 0.0
+    num_batches = 0
+    loss_fn = torch.nn.CrossEntropyLoss()
     
     with torch.no_grad():
         for batch in dataloader:
@@ -35,13 +38,25 @@ def evaluate_model(model, dataloader, device):
             
             # Get predictions (argmax over phase dimension)
             predictions = torch.argmax(outputs, dim=1)  # (batch, samples)
+
+            # Convert labels to class indices if one-hot or probabilistic
+            if labels.ndim == 3:
+                labels_idx = torch.argmax(labels, dim=1)
+            else:
+                labels_idx = labels
+
+            # Compute loss
+            loss = loss_fn(outputs, labels_idx.to(device))
+            total_loss += loss.item()
+            num_batches += 1
             
             # Flatten for metric computation
             all_predictions.extend(predictions.cpu().numpy().flatten())
-            all_labels.extend(labels.numpy().flatten())
+            all_labels.extend(labels_idx.cpu().numpy().flatten())
     
     # Compute metrics
     metrics = compute_metrics(np.array(all_labels), np.array(all_predictions))
+    metrics['loss'] = total_loss / max(1, num_batches)
     
     return metrics
 
@@ -78,6 +93,9 @@ def compute_metrics(y_true, y_pred, num_classes=3):
     
     metrics = {
         'accuracy': accuracy,
+        'precision': weighted_precision,
+        'recall': weighted_recall,
+        'f1': weighted_f1,
         'macro_precision': macro_precision,
         'macro_recall': macro_recall,
         'macro_f1': macro_f1,

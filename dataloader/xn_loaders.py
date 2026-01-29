@@ -6,7 +6,7 @@ Wraps SeisBench GenericGenerator for easy integration.
 import torch
 from torch.utils.data import Dataset, DataLoader
 import numpy as np
-from seisbench.data import GenericGenerator
+from seisbench.generate import GenericGenerator
 
 
 class SeismicDataset(Dataset):

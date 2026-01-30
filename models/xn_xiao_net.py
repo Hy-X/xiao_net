@@ -1,8 +1,3 @@
-"""
-Small PhaseNet student model for seismic phase picking.
-Lightweight U-Net-style architecture designed for edge deployment.
-"""
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F

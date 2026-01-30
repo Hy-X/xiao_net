@@ -26,6 +26,19 @@ class DistillationLoss(nn.Module):
         self.ce_loss = nn.CrossEntropyLoss()
         self.kl_loss = nn.KLDivLoss(reduction='batchmean')
     
+    def compute_hard_loss(self, student_logits, labels):
+        """
+        Compute hard label loss (ground truth supervision).
+        
+        Args:
+            student_logits: Student model predictions (batch*samples, num_phases)
+            labels: Ground truth labels (batch*samples,)
+        
+        Returns:
+            Cross-entropy loss value
+        """
+        return self.ce_loss(student_logits, labels)
+    
     def forward(self, student_logits, labels, teacher_logits=None):
         """
         Compute distillation loss.
@@ -51,7 +64,7 @@ class DistillationLoss(nn.Module):
         student_flat = student_logits.view(batch_size * samples, num_phases)
         labels_flat = labels_onehot.view(batch_size * samples, num_phases)
         
-        hard_loss = self.ce_loss(student_flat, labels_flat.argmax(dim=1))
+        hard_loss = self.compute_hard_loss(student_flat, labels_flat.argmax(dim=1))
         
         # Soft label loss (knowledge distillation)
         if teacher_logits is not None and self.alpha > 0:

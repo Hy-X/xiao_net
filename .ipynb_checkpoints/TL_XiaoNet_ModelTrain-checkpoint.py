@@ -1,46 +1,31 @@
 #!/usr/bin/env python
 # coding: utf-8
 
+import obspy
+from obspy.clients.fdsn import Client
+from obspy import UTCDateTime
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+import torch
+
 import json
 import time
 
-import matplotlib.pyplot as plt
-import numpy as np
-import obspy
-import pandas as pd
-import seaborn as sns
-import torch
-from obspy import UTCDateTime
-from obspy.clients.fdsn import Client
-from scipy.signal import find_peaks
-from torch.utils.data import DataLoader
-
+import seisbench.models as sbm
 import seisbench.data as sbd
 import seisbench.generate as sbg
-import seisbench.models as sbm
-from seisbench.util import worker_seeding
 
-print("Loaded packages successfully!")
+from seisbench.util import worker_seeding
+from torch.utils.data import DataLoader
+from obspy.clients.fdsn import Client
+from scipy.signal import find_peaks
+
 
 # Load configuration from JSON file
 with open('config.json', 'r') as f:
     config = json.load(f)
-
-# Debug: print configuration summary
-print("Configuration loaded:")
-print("Training:")
-print(f"  batch_size: {config['training']['batch_size']}")
-print(f"  num_workers: {config['training']['num_workers']}")
-print(f"  learning_rate: {config['training']['learning_rate']}")
-print(f"  epochs: {config['training']['epochs']}")
-print(f"  patience: {config['training']['patience']}")
-print("Device:")
-print(f"  use_cuda: {config['device']['use_cuda']}")
-print(f"  device_id: {config['device']['device_id']}")
-print("Peak detection:")
-print(f"  sampling_rate: {config['peak_detection']['sampling_rate']}")
-print(f"  height: {config['peak_detection']['height']}")
-print(f"  distance: {config['peak_detection']['distance']}")
 
 # Set random seed for reproducibility
 import random
@@ -51,15 +36,6 @@ torch.backends.cudnn.deterministic = True
 torch.backends.cudnn.benchmark = False
 
 import os
-
-# Set random seed for reproducibility
-seed = 0
-print(f"Random seed selected: {seed}")
-random.seed(seed)
-np.random.seed(seed)
-torch.manual_seed(seed)
-torch.backends.cudnn.deterministic = True
-torch.backends.cudnn.benchmark = False
 
 # Loader the picker
 #model = sbm.EQTransformer.from_pretrained("original")

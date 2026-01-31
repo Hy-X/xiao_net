@@ -1,0 +1,4 @@
+Mean Residual P Arrival Time: -0.0262 seconds
+Standard Deviation of Residual P Arrival Time: 1.6424 seconds
+Mean Residual S Arrival Time: -0.0241 seconds
+Standard Deviation of Residual S Arrival Time: 0.9451 seconds

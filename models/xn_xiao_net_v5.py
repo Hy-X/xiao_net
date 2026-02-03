@@ -11,7 +11,7 @@ class XiaoNetEdge(nn.Module):
     - Hardswish activation (faster on edge, quantization-friendly)
     - Reduced base channels (default 4 vs 6)
     - Quantization-ready (no inplace ops, FloatFunctional for adds)
-    - Sigmoid output (faster than softmax, allows overlapping phases)
+    - Softmax output (PhaseNet-compatible, mutually exclusive phases)
 
     Typical deployment:
     - ONNX export: torch.onnx.export(model, x, "model.onnx", opset_version=13)
@@ -89,7 +89,7 @@ class XiaoNetEdge(nn.Module):
         d1 = self.dec1(d2)[..., :e1.size(-1)]
         d1 = self.skip_add1.add(d1, e1)
 
-        out = torch.sigmoid(self.output(d1))
+        out = F.softmax(self.output(d1), dim=1)
 
         # Pad to original length if needed
         if out.size(-1) < original_size:

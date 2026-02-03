@@ -4,6 +4,10 @@
         "height": 0.5,
         "distance": 100
     },
+    "data_filter": {
+        "min_magnitude": 3.0,
+        "max_magnitude": 4.0
+    },
     "training": {
         "batch_size": 64,
         "num_workers": 4,

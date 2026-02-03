@@ -18,7 +18,7 @@ class XiaoNetEdge(nn.Module):
     - INT8 quantization for 2-4x CPU/NPU speedup
     """
 
-    def __init__(self, window_len=1000, in_channels=3, num_phases=3, base_channels=4):
+    def __init__(self, window_len=3001, in_channels=3, num_phases=3, base_channels=4):
         super().__init__()
         self.window_len = window_len
         self.in_channels = in_channels

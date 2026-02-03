@@ -4,17 +4,10 @@
         "height": 0.5,
         "distance": 100
     },
-    "data": {
-        "dataset_name": "OKLA_1Mil_120s_Ver_3",
-        "sampling_rate": 100,
-        "window_len": 3001,
-        "samples_before": 3000,
-        "windowlen_large": 6000,
-        "sample_fraction": 0.1
-    },
     "data_filter": {
         "min_magnitude": 1.0,
-        "max_magnitude": 2.0
+        "max_magnitude": 2.0,
+        "sample_fraction": 0.1
     },
     "training": {
         "batch_size": 64,

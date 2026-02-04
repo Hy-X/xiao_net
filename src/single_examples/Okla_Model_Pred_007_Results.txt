@@ -1,0 +1,6 @@
+Ground Truth P arrival times: []
+Ground Truth S arrival times: [9.03]
+Model Predicted P arrival times: []
+Model Predicted S arrival times: [9.06]
+Residual P arrival times: []
+Residual S arrival times: [[0.03]]

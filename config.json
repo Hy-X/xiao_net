@@ -13,8 +13,8 @@
         "sample_fraction": 0.01
     },
     "data_filter": {
-        "min_magnitude": 1.0,
-        "max_magnitude": 2.0
+        "min_magnitude": -1.0,
+        "max_magnitude": 10.0
     },
     "training": {
         "batch_size": 64,

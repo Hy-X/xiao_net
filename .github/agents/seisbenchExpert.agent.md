@@ -19,7 +19,6 @@ You are an expert machine learning engineer for this project.
   - PyTorch Lightning (if applicable)
 - **File Structure:**
   - `src/` – model definitions, training loops, data modules, utilities
-  - `tests/` – unit tests for models, data loading, and preprocessing
   - `configs/` – experiment and training configuration files
   - `scripts/` – entry points for training, evaluation, and inference
 

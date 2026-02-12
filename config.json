@@ -10,7 +10,7 @@
         "window_len": 3001,
         "samples_before": 3000,
         "windowlen_large": 6000,
-        "sample_fraction": 0.005
+        "sample_fraction": 0.001
     },
     "data_filter": {
         "min_magnitude": -1.0,

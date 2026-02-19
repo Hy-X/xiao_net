@@ -19,7 +19,12 @@ import os
 import sys
 import json
 import random
+import multiprocessing
 from pathlib import Path
+
+# Fix macOS multiprocessing: use 'fork' instead of default 'spawn'
+# to prevent DataLoader workers from re-executing the entire script
+#multiprocessing.set_start_method('fork', force=True)
 
 # Scientific computing
 import numpy as np
@@ -73,22 +78,24 @@ class EarlyStopping:
         patience: Number of epochs to wait before stopping
         min_delta: Minimum change to qualify as an improvement
         checkpoint_dir: Directory to save model checkpoints
+        model_name: Name of the model (used in checkpoint filename)
         verbose: Whether to print early stopping messages
     """
     
-    def __init__(self, patience=10, min_delta=0.0, checkpoint_dir='checkpoints/', verbose=True):
+    def __init__(self, patience=10, min_delta=0.0, checkpoint_dir='checkpoints/', model_name='XiaoNet_V5b', verbose=True):
         self.patience = patience
         self.min_delta = min_delta
         self.checkpoint_dir = Path(checkpoint_dir)
         self.checkpoint_dir.mkdir(parents=True, exist_ok=True)
+        self.model_name = model_name
         self.verbose = verbose
         
         self.counter = 0
         self.best_score = None
         self.early_stop = False
-        self.checkpoint_path = self.checkpoint_dir / 'best_model.pth'
+        self.checkpoint_path = self.checkpoint_dir / f'{model_name}-best-model.pth'
     
-    def __call__(self, val_loss, model, epoch):
+    def __call__(self, val_loss, model, epoch, optimizer=None, scheduler=None):
         """
         Check if training should stop early.
         
@@ -96,12 +103,14 @@ class EarlyStopping:
             val_loss: Current validation loss
             model: Model to save if improvement is found
             epoch: Current epoch number
+            optimizer: Optimizer to save state for (optional)
+            scheduler: LR scheduler to save state for (optional)
         """
         score = -val_loss  # Negative because lower is better
         
         if self.best_score is None:
             self.best_score = score
-            self.save_checkpoint(model, epoch)
+            self.save_checkpoint(model, epoch, optimizer, scheduler)
         elif score < self.best_score + self.min_delta:
             self.counter += 1
             if self.verbose:
@@ -110,16 +119,21 @@ class EarlyStopping:
                 self.early_stop = True
         else:
             self.best_score = score
-            self.save_checkpoint(model, epoch)
+            self.save_checkpoint(model, epoch, optimizer, scheduler)
             self.counter = 0
     
-    def save_checkpoint(self, model, epoch):
-        """Save model checkpoint."""
-        torch.save({
+    def save_checkpoint(self, model, epoch, optimizer=None, scheduler=None):
+        """Save model checkpoint with optimizer and scheduler states."""
+        checkpoint = {
             'epoch': epoch,
             'model_state_dict': model.state_dict(),
-            'best_score': self.best_score
-        }, self.checkpoint_path)
+            'best_score': self.best_score,
+        }
+        if optimizer is not None:
+            checkpoint['optimizer_state_dict'] = optimizer.state_dict()
+        if scheduler is not None:
+            checkpoint['scheduler_state_dict'] = scheduler.state_dict()
+        torch.save(checkpoint, self.checkpoint_path)
         if self.verbose:
             print(f'Validation loss improved. Saving model to {self.checkpoint_path}')
 
@@ -471,10 +485,21 @@ epochs = config['training']['epochs']
 
 optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 
+# LR scheduler: reduce LR by half when val loss plateaus for 3 epochs
+scheduler = ReduceLROnPlateau(
+    optimizer,
+    mode='min',
+    factor=0.5,
+    patience=3,
+    verbose=True,
+    min_lr=1e-6,
+)
+
 print("\n" + "=" * 60)
 print("OPTIMIZER SETTINGS")
 print("=" * 60)
 print(f"Optimizer: {optimizer.__class__.__name__}")
+print(f"Scheduler: ReduceLROnPlateau (factor=0.5, patience=3, min_lr=1e-6)")
 print("=" * 60)
 
 
@@ -485,9 +510,12 @@ print("=" * 60)
 checkpoint_dir = Path.cwd().parent / "checkpoints"
 checkpoint_dir.mkdir(parents=True, exist_ok=True)
 
-best_model_path = checkpoint_dir / "best_model.pth"
-final_model_path = checkpoint_dir / "final_model.pth"
-history_path = checkpoint_dir / "loss_history.json"
+# Derive model name from the model class
+model_name = model.__class__.__name__
+
+best_model_path = checkpoint_dir / f"{model_name}-best-model.pth"
+final_model_path = checkpoint_dir / f"{model_name}-final-model.pth"
+history_path = checkpoint_dir / f"{model_name}-loss_history.json"
 
 patience = config.get('training', {}).get('patience', 5)
 min_delta = config.get('training', {}).get('min_delta', 0.0)
@@ -496,13 +524,15 @@ early_stopping = EarlyStopping(
     patience=patience,
     min_delta=min_delta,
     checkpoint_dir=checkpoint_dir,
+    model_name=model_name,
     verbose=True,
 )
 
 # Loss history container
 history = {
     "train_loss": [],
-    "val_loss": []
+    "val_loss": [],
+    "learning_rate": [],
 }
 
 # Helper functions for saving
@@ -512,16 +542,22 @@ def save_loss_history(history_dict, path):
     print(f"✓ Loss history saved to {path}")
 
 
-def save_final_model(model, path):
-    torch.save({
+def save_final_model(model, path, optimizer=None, scheduler=None):
+    checkpoint = {
         "model_state_dict": model.state_dict(),
-        "config": config
-    }, path)
+        "config": config,
+    }
+    if optimizer is not None:
+        checkpoint["optimizer_state_dict"] = optimizer.state_dict()
+    if scheduler is not None:
+        checkpoint["scheduler_state_dict"] = scheduler.state_dict()
+    torch.save(checkpoint, path)
     print(f"✓ Final model saved to {path}")
 
 print("\n" + "=" * 60)
 print("EARLY STOPPING & CHECKPOINTS")
 print("=" * 60)
+print(f"Model name:     {model_name}")
 print(f"Checkpoint dir: {checkpoint_dir}")
 print(f"Best model:     {best_model_path}")
 print(f"Final model:    {final_model_path}")
@@ -577,13 +613,22 @@ for epoch in range(epochs):
     avg_val_loss = val_loss / len(val_loader)
     history["val_loss"].append(avg_val_loss)
     
+    # Step the LR scheduler based on validation loss
+    current_lr = optimizer.param_groups[0]['lr']
+    scheduler.step(avg_val_loss)
+    new_lr = optimizer.param_groups[0]['lr']
+    history["learning_rate"].append(current_lr)
+    
     # Print epoch summary
     print(f"\nEpoch {epoch+1}/{epochs} Summary:")
     print(f"  Train Loss: {avg_train_loss:.4f}")
     print(f"  Val Loss:   {avg_val_loss:.4f}")
+    print(f"  LR:         {current_lr:.2e}")
+    if new_lr < current_lr:
+        print(f"  ↓ LR reduced to {new_lr:.2e}")
     
-    # Check early stopping
-    early_stopping(avg_val_loss, model, epoch)
+    # Check early stopping (saves optimizer + scheduler state in checkpoint)
+    early_stopping(avg_val_loss, model, epoch, optimizer=optimizer, scheduler=scheduler)
     
     if early_stopping.early_stop:
         print(f"\nEarly stopping triggered at epoch {epoch+1}")
@@ -591,8 +636,15 @@ for epoch in range(epochs):
     
     print("-" * 60)
 
-# Save final model and history
-save_final_model(model, final_model_path)
+# Reload the best model weights before saving final model
+# This ensures the final model has the best weights, not the last epoch's weights
+print("\nLoading best model weights for final save...")
+best_checkpoint = torch.load(early_stopping.checkpoint_path, weights_only=False)
+model.load_state_dict(best_checkpoint['model_state_dict'])
+print(f"✓ Loaded best weights from epoch {best_checkpoint['epoch'] + 1}")
+
+# Save final model (now with best weights) and history
+save_final_model(model, final_model_path, optimizer=optimizer, scheduler=scheduler)
 save_loss_history(history, history_path)
 
 print("\n" + "=" * 60)
@@ -601,6 +653,7 @@ print("=" * 60)
 print(f"Best model saved to: {best_model_path}")
 print(f"Final model saved to: {final_model_path}")
 print(f"Loss history saved to: {history_path}")
+print(f"Best epoch: {best_checkpoint['epoch'] + 1}")
 print("=" * 60)
 
 

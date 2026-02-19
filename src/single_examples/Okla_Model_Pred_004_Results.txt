@@ -1,6 +1,7 @@
-Ground Truth P arrival times: [6.38]
-Ground Truth S arrival times: [15.66]
-Model Predicted P arrival times: [6.34]
-Model Predicted S arrival times: [15.88]
-Residual P arrival times: [[-0.04]]
-Residual S arrival times: [[0.22]]
+Inference Time (seconds): 0.004047250025905669
+Ground Truth P arrival times: [14.08]
+Ground Truth S arrival times: [27.57]
+Model Predicted P arrival times: []
+Model Predicted S arrival times: [ 4.37  9.59 21.07 26.69]
+Residual P arrival times: []
+Residual S arrival times: [[-23.2  -17.98  -6.5   -0.88]]

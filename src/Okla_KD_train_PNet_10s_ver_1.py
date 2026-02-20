@@ -389,7 +389,8 @@ augmentations = [
     sbg.RandomWindow(windowlen=1001, strategy="pad"),
     sbg.Normalize(demean_axis=-1, detrend_axis=-1, amp_norm_axis=-1, amp_norm_type="peak"),
     sbg.ChangeDtype(np.float32),
-    sbg.ProbabilisticLabeller(sigma=30, dim=0),
+    #sbg.ProbabilisticLabeller(sigma=30, dim=0),
+    sbg.ProbabilisticLabeller(sigma=10, dim=0),
 ]
 
 train_generator.add_augmentations(augmentations)
@@ -516,7 +517,7 @@ checkpoint_dir.mkdir(parents=True, exist_ok=True)
 
 # Descriptive model name for checkpoint files
 # Format: {architecture}_{dataset}_{window}_{version}
-model_name = f"{model.__class__.__name__}_Okla_PNet_10s_ver_1"
+model_name = f"{model.__class__.__name__}_Okla_PNet_10s_sigma10_ver_1"
 
 best_model_path = checkpoint_dir / f"{model_name}-best-model.pth"
 final_model_path = checkpoint_dir / f"{model_name}-final-model.pth"

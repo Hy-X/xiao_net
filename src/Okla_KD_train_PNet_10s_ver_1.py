@@ -1010,7 +1010,7 @@ plt.title('Histogram of Residual P Peak Arrival Times')
 plt.xlabel('Residual P Arrival Time (seconds)')
 plt.ylabel('Frequency')
 plt.grid(True)
-plt.savefig("residual_p_histogram.png")  # Save the figure as a PNG file
+plt.savefig(f"{model_name}_residual_p_histogram.png")  # Save the figure as a PNG file
 plt.show()
 
 # Plot the histogram of residual S peak arrival times
@@ -1033,7 +1033,7 @@ plt.title('Histogram of Residual S Peak Arrival Times')
 plt.xlabel('Residual S Arrival Time (seconds)')
 plt.ylabel('Frequency')
 plt.grid(True)
-plt.savefig("residual_s_histogram.png")  # Save the figure as a PNG file
+plt.savefig(f"{model_name}_residual_s_histogram.png")  # Save the figure as a PNG file
 plt.show()
 
 
@@ -1085,8 +1085,8 @@ plt.ylabel('Count', fontsize=14)
 plt.xlim(x_min, x_max)
 plt.legend(fontsize=10)
 plt.tight_layout()
-plt.savefig("residual_p_histogram_shaded.png")
-plt.savefig("residual_p_histogram_shaded.ps")
+plt.savefig(f"{model_name}_residual_p_histogram_shaded.png")
+plt.savefig(f"{model_name}_residual_p_histogram_shaded.ps")
 plt.show()
 
 
@@ -1119,7 +1119,9 @@ plt.ylabel('Count', fontsize=14)
 plt.xlim(x_min, x_max)
 plt.legend(fontsize=10)
 plt.tight_layout()
-plt.savefig("residual_s_histogram_shaded.png")
-plt.savefig("residual_s_histogram_shaded.ps")
+plt.savefig(f"{model_name}_residual_s_histogram_shaded.png")
+plt.savefig(f"{model_name}_residual_s_histogram_shaded.ps")
 plt.show()
 
+
+# %%

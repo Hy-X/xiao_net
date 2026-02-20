@@ -24,7 +24,7 @@ from pathlib import Path
 
 # Fix macOS multiprocessing: use 'fork' instead of default 'spawn'
 # to prevent DataLoader workers from re-executing the entire script
-#multiprocessing.set_start_method('fork', force=True)
+multiprocessing.set_start_method('fork', force=True)
 
 # Scientific computing
 import numpy as np
@@ -76,7 +76,7 @@ class EarlyStopping:
     
     Args:
         patience: Number of epochs to wait before stopping
-        min_delta: Minimum change to qualify as an improvement
+        min_delta: Minimum decrease in val_loss to qualify as an improvement
         checkpoint_dir: Directory to save model checkpoints
         model_name: Name of the model (used in checkpoint filename)
         verbose: Whether to print early stopping messages
@@ -91,7 +91,7 @@ class EarlyStopping:
         self.verbose = verbose
         
         self.counter = 0
-        self.best_score = None
+        self.best_loss = None
         self.early_stop = False
         self.checkpoint_path = self.checkpoint_dir / f'{model_name}-best-model.pth'
     
@@ -106,28 +106,33 @@ class EarlyStopping:
             optimizer: Optimizer to save state for (optional)
             scheduler: LR scheduler to save state for (optional)
         """
-        score = -val_loss  # Negative because lower is better
-        
-        if self.best_score is None:
-            self.best_score = score
-            self.save_checkpoint(model, epoch, optimizer, scheduler)
-        elif score < self.best_score + self.min_delta:
+        if self.best_loss is None:
+            # First epoch — record baseline and save checkpoint
+            self.best_loss = val_loss
+            self.save_checkpoint(val_loss, model, epoch, optimizer, scheduler)
+        elif val_loss >= self.best_loss - self.min_delta:
+            # No meaningful improvement
             self.counter += 1
             if self.verbose:
                 print(f'EarlyStopping counter: {self.counter}/{self.patience}')
             if self.counter >= self.patience:
                 self.early_stop = True
         else:
-            self.best_score = score
-            self.save_checkpoint(model, epoch, optimizer, scheduler)
+            # Improvement found — reset counter and save
+            self.best_loss = val_loss
+            self.save_checkpoint(val_loss, model, epoch, optimizer, scheduler)
             self.counter = 0
     
-    def save_checkpoint(self, model, epoch, optimizer=None, scheduler=None):
-        """Save model checkpoint with optimizer and scheduler states."""
+    def save_checkpoint(self, val_loss, model, epoch, optimizer=None, scheduler=None):
+        """Save model checkpoint with optimizer, scheduler, and early stopping states."""
         checkpoint = {
             'epoch': epoch,
             'model_state_dict': model.state_dict(),
-            'best_score': self.best_score,
+            'val_loss': val_loss,
+            'early_stopping': {
+                'counter': self.counter,
+                'best_loss': self.best_loss,
+            },
         }
         if optimizer is not None:
             checkpoint['optimizer_state_dict'] = optimizer.state_dict()
@@ -135,7 +140,19 @@ class EarlyStopping:
             checkpoint['scheduler_state_dict'] = scheduler.state_dict()
         torch.save(checkpoint, self.checkpoint_path)
         if self.verbose:
-            print(f'Validation loss improved. Saving model to {self.checkpoint_path}')
+            print(f'Validation loss improved ({val_loss:.6f}). Saving model to {self.checkpoint_path}')
+    
+    def load_state(self, checkpoint):
+        """Restore early stopping state from a checkpoint for training resumption."""
+        es_state = checkpoint.get('early_stopping', {})
+        self.best_loss = es_state.get('best_loss', None)
+        self.counter = es_state.get('counter', 0)
+        if self.verbose:
+            print(f'Restored EarlyStopping state: best_loss={self.best_loss}, counter={self.counter}')
+    
+    def __repr__(self):
+        return (f"EarlyStopping(patience={self.patience}, counter={self.counter}, "
+                f"best_loss={self.best_loss})")
 
 
 # In[ ]:
@@ -191,14 +208,6 @@ print(json.dumps(config, indent=2))
 # In[ ]:
 
 
-# Load PhaseNet teacher model (pretrained on STEAD)
-print("Available PhaseNet pretrained models:")
-sbm.PhaseNet.list_pretrained()
-
-
-# In[ ]:
-
-
 print("\nLoading PhaseNet teacher model...")
 model = sbm.PhaseNet.from_pretrained("stead")
 model.to(device)
@@ -233,13 +242,6 @@ if sample_fraction < 1.0:
 # Split into train/dev/test
 train, dev, test = data.train_dev_test()
 
-print(f"\n✓ Dataset loaded successfully!")
-print(f"Training samples: {len(train):,}")
-print(f"Validation samples: {len(dev):,}")
-print(f"Test samples: {len(test):,}")
-print(f"Total samples: {len(data):,}")
-
-
 # In[ ]:
 
 
@@ -251,27 +253,27 @@ print(f"Applying magnitude filters: {min_magnitude} < M < {max_magnitude}")
 
 try:
     # Filter events with magnitude above the minimum
-    print(f"✓ [Data Filter]: Start - magnitude > {min_magnitude}")
+    print(f"[Data Filter]: Start - magnitude > {min_magnitude}")
     mask = data.metadata["source_magnitude"] > min_magnitude
     data.filter(mask, inplace=True)
-    print(f"✓ [Data Filter]: Applied - magnitude > {min_magnitude}, remaining samples: {len(data):,}")
+    print(f"[Data Filter]: Applied - magnitude > {min_magnitude}, remaining samples: {len(data):,}")
 except Exception as exc:
-    print("✗ [Data Filter]: Error - Failed to apply minimum magnitude filter.")
-    print(f"  Details: {exc}")
+    print("[Data Filter]: Error - Failed to apply minimum magnitude filter.")
+    print(f"Details: {exc}")
     raise
 
 try:
     # Filter events with magnitude below the maximum
-    print(f"✓ [Data Filter]: Start - magnitude < {max_magnitude}")
+    print(f"[Data Filter]: Start - magnitude < {max_magnitude}")
     mask = data.metadata["source_magnitude"] < max_magnitude
     data.filter(mask, inplace=True)
-    print(f"✓ [Data Filter]: Applied - magnitude < {max_magnitude}, remaining samples: {len(data):,}")
+    print(f"[Data Filter]: Applied - magnitude < {max_magnitude}, remaining samples: {len(data):,}")
 except Exception as exc:
-    print("✗ [Data Filter]: Error - Failed to apply maximum magnitude filter.")
-    print(f"  Details: {exc}")
+    print("[Data Filter]: Error - Failed to apply maximum magnitude filter.")
+    print(f"Details: {exc}")
     raise
 
-print(f"\n✓ Magnitude filtering complete: {len(data):,} traces in range [{min_magnitude}, {max_magnitude}]")
+print(f"\nMagnitude filtering complete: {len(data):,} traces in range [{min_magnitude}, {max_magnitude}]")
 
 
 # In[ ]:
@@ -298,7 +300,9 @@ print(f"Window length: {window_len} samples")
 if hasattr(data, 'metadata') and data.metadata is not None:
     if 'source_magnitude' in data.metadata:
         mags = data.metadata['source_magnitude']
-        print(f"Magnitude stats: min={mags.min():.2f}, max={mags.max():.2f}, mean={mags.mean():.2f}")
+        print(f"Magnitude min:  {mags.min():.2f}")
+        print(f"Magnitude max:  {mags.max():.2f}")
+        print(f"Magnitude mean: {mags.mean():.2f}")
     print(f"Metadata columns: {list(data.metadata.columns)}")
 
 print("=" * 60)
@@ -309,11 +313,6 @@ print("=" * 60)
 
 # Split data into train/dev/test after filtering
 train, dev, test = data.train_dev_test()
-
-print("\n✓ Dataset split after filtering")
-print(f"Train size: {len(train):,}")
-print(f"Validation size: {len(dev):,}")
-print(f"Test size: {len(test):,}")
 
 # Split ratios
 n_total = len(train) + len(dev) + len(test)
@@ -331,6 +330,11 @@ print("=" * 60)
 print(f"Train dataset: {train}")
 print(f"Dev dataset:   {dev}")
 print(f"Test dataset:  {test}")
+# Split ratios
+n_total = len(train) + len(dev) + len(test)
+if n_total > 0:
+    print(f"Split ratios: train={len(train)/n_total:.2%}, dev={len(dev)/n_total:.2%}, test={len(test)/n_total:.2%}")
+
 print("=" * 60)
 
 
@@ -416,7 +420,7 @@ print("=" * 60)
 # Parameters for peak detection
 batch_size = config['training']['batch_size']
 num_workers = config['training']['num_workers']
-print(f"✓ [DataLoader]: batch_size={batch_size}, num_workers={num_workers}")
+print(f"[DataLoader]: batch_size={batch_size}, num_workers={num_workers}")
 
 
 # In[ ]:
@@ -491,7 +495,7 @@ scheduler = ReduceLROnPlateau(
     mode='min',
     factor=0.5,
     patience=3,
-    verbose=True,
+    #verbose=True,
     min_lr=1e-6,
 )
 
@@ -510,8 +514,9 @@ print("=" * 60)
 checkpoint_dir = Path.cwd().parent / "checkpoints"
 checkpoint_dir.mkdir(parents=True, exist_ok=True)
 
-# Derive model name from the model class
-model_name = model.__class__.__name__
+# Descriptive model name for checkpoint files
+# Format: {architecture}_{dataset}_{window}_{version}
+model_name = f"{model.__class__.__name__}_Okla_PNet_10s_ver_1"
 
 best_model_path = checkpoint_dir / f"{model_name}-best-model.pth"
 final_model_path = checkpoint_dir / f"{model_name}-final-model.pth"
@@ -542,17 +547,19 @@ def save_loss_history(history_dict, path):
     print(f"✓ Loss history saved to {path}")
 
 
-def save_final_model(model, path, optimizer=None, scheduler=None):
+def save_final_model(model, path, epoch=None, optimizer=None, scheduler=None):
     checkpoint = {
         "model_state_dict": model.state_dict(),
         "config": config,
     }
+    if epoch is not None:
+        checkpoint["epoch"] = epoch
     if optimizer is not None:
         checkpoint["optimizer_state_dict"] = optimizer.state_dict()
     if scheduler is not None:
         checkpoint["scheduler_state_dict"] = scheduler.state_dict()
     torch.save(checkpoint, path)
-    print(f"✓ Final model saved to {path}")
+    print(f"Final model saved to {path}")
 
 print("\n" + "=" * 60)
 print("EARLY STOPPING & CHECKPOINTS")
@@ -644,7 +651,7 @@ model.load_state_dict(best_checkpoint['model_state_dict'])
 print(f"✓ Loaded best weights from epoch {best_checkpoint['epoch'] + 1}")
 
 # Save final model (now with best weights) and history
-save_final_model(model, final_model_path, optimizer=optimizer, scheduler=scheduler)
+save_final_model(model, final_model_path, epoch=best_checkpoint['epoch'], optimizer=optimizer, scheduler=scheduler)
 save_loss_history(history, history_path)
 
 print("\n" + "=" * 60)
